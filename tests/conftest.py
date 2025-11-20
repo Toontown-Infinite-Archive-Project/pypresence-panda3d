@@ -1,33 +1,24 @@
 """Pytest configuration and shared fixtures"""
 
-import asyncio
 import json
 import struct
-from unittest.mock import AsyncMock, MagicMock, Mock
+from unittest.mock import MagicMock, Mock
 
 import pytest
 
 
 @pytest.fixture
-def mock_event_loop():
-    """Provide a fresh event loop for tests"""
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    yield loop
-    loop.close()
-
-
-@pytest.fixture
 def mock_stream_reader():
-    """Mock asyncio StreamReader"""
-    reader = AsyncMock(spec=asyncio.StreamReader)
+    """Mock a simple stream reader with synchronous `read` method."""
+    reader = MagicMock()
+    reader.read = Mock()
     return reader
 
 
 @pytest.fixture
 def mock_stream_writer():
-    """Mock asyncio StreamWriter"""
-    writer = MagicMock(spec=asyncio.StreamWriter)
+    """Mock a simple stream writer with synchronous `write` method."""
+    writer = MagicMock()
     writer.write = Mock()
     writer._call_connection_lost = Mock()
     return writer
@@ -36,7 +27,6 @@ def mock_stream_writer():
 @pytest.fixture
 def mock_ipc_connection(mock_stream_reader, mock_stream_writer):
     """Mock a successful IPC connection with handshake response"""
-    # Mock successful handshake response
     handshake_response = {
         "cmd": "DISPATCH",
         "data": {
@@ -54,12 +44,7 @@ def mock_ipc_connection(mock_stream_reader, mock_stream_writer):
     response_json = json.dumps(handshake_response).encode("utf-8")
     preamble = struct.pack("<II", 1, len(response_json))
 
-    mock_stream_reader.read = AsyncMock(
-        side_effect=[
-            preamble,  # First read for handshake
-            response_json,  # Second read for handshake data
-        ]
-    )
+    mock_stream_reader.read.side_effect = [preamble, response_json]
 
     return mock_stream_reader, mock_stream_writer
 

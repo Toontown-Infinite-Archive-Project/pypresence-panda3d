@@ -1,6 +1,8 @@
-"""Util functions that are needed but messy."""
+"""Util functions that are needed but messy.
 
-import asyncio
+This project removes asyncio usage; helpers here avoid importing asyncio so
+the library can be driven by Panda3D tasks or other event systems.
+"""
 import os
 import socket
 import sys
@@ -68,12 +70,6 @@ def get_ipc_path(pipe=None):
 
 
 def get_event_loop(force_fresh: bool = False):
-    if force_fresh:
-        return asyncio.new_event_loop()
-    try:
-        running = asyncio.get_running_loop()
-    except RuntimeError:
-        return asyncio.new_event_loop()
-    if running.is_closed():
-        return asyncio.new_event_loop()
-    return running
+    # Asyncio has been removed from the core library for Panda3D compatibility.
+    # Return None as a placeholder; callers should not rely on an asyncio loop.
+    return None

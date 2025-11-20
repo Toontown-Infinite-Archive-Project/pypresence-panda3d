@@ -73,22 +73,31 @@ class Presence(BaseClient):
         else:
             payload = payload_override
         self.send_data(1, payload)
-        return self.loop.run_until_complete(self.read_output())
+        return self.read_output()
 
     def clear(self, pid: int = os.getpid()):
         payload = Payload.set_activity(pid, activity=None)
         self.send_data(1, payload)
-        return self.loop.run_until_complete(self.read_output())
+        return self.read_output()
 
     def connect(self):
+        # Establish connection synchronously
         self.update_event_loop(get_event_loop())
-        self.loop.run_until_complete(self.handshake())
+        return self.handshake()
 
     def close(self):
         self.send_data(2, {"v": 1, "client_id": self.client_id})
-        self.loop.close()
-        if sys.platform == "win32":
-            self.sock_writer._call_connection_lost(None)
+        # Close underlying writer/socket if possible
+        if getattr(self.sock_writer, "close", None):
+            try:
+                self.sock_writer.close()
+            except Exception:
+                pass
+        if sys.platform == "win32" and getattr(self.sock_writer, "_call_connection_lost", None):
+            try:
+                self.sock_writer._call_connection_lost(None)
+            except Exception:
+                pass
 
 
 class AioPresence(BaseClient):

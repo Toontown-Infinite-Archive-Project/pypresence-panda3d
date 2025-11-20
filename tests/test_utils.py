@@ -1,6 +1,5 @@
 """Test utility functions"""
 
-import asyncio
 import sys
 
 import pytest
@@ -75,55 +74,13 @@ class TestRemoveNone:
 
 
 class TestGetEventLoop:
-    """Test get_event_loop utility function"""
+    """Test get_event_loop utility function for non-asyncio mode"""
 
-    def test_returns_new_loop_when_forced(self):
-        """Test force_fresh returns a new loop"""
-        loop1 = get_event_loop(force_fresh=True)
-        loop2 = get_event_loop(force_fresh=True)
+    def test_get_event_loop_returns_none(self):
+        assert get_event_loop() is None
 
-        assert loop1 is not loop2
-        assert isinstance(loop1, asyncio.AbstractEventLoop)
-        assert isinstance(loop2, asyncio.AbstractEventLoop)
-
-        loop1.close()
-        loop2.close()
-
-    def test_returns_running_loop_if_available(self):
-        """Test returns running loop when available"""
-
-        async def check_loop():
-            loop = get_event_loop()
-            running = asyncio.get_running_loop()
-            assert loop is running
-
-        asyncio.run(check_loop())
-
-    def test_returns_new_loop_when_none_running(self):
-        """Test returns new loop when no loop is running"""
-        # Ensure no loop is running
-        try:
-            asyncio.get_running_loop()
-            pytest.skip("A loop is already running")
-        except RuntimeError:
-            pass
-
-        loop = get_event_loop()
-        assert isinstance(loop, asyncio.AbstractEventLoop)
-        assert not loop.is_closed()
-        loop.close()
-
-    def test_returns_new_loop_if_current_closed(self):
-        """Test returns new loop if current loop is closed"""
-        old_loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(old_loop)
-        old_loop.close()
-
-        new_loop = get_event_loop()
-        assert isinstance(new_loop, asyncio.AbstractEventLoop)
-        assert not new_loop.is_closed()
-        assert new_loop is not old_loop
-        new_loop.close()
+    def test_force_fresh_returns_none(self):
+        assert get_event_loop(force_fresh=True) is None
 
 
 class TestIPCPath:
